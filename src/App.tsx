@@ -1,12 +1,13 @@
-import { Footer } from './pages/componets/Footer'
-import { Header } from './pages/componets/Header'
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Home } from "./pages/Home";
 
 function App() {
   return (
-    <>
-    <Header />
-    <Footer />
-    </>
+     <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+      </Routes>
+    </Router>
   )
 }
 

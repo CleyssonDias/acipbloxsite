@@ -1,6 +1,5 @@
 import { Footer } from './componets/Footer'
-import { Header } from './componets/Header'
-
+import {Header} from './componets/Header'
 function Home() {
   return (
     <>
@@ -10,4 +9,4 @@ function Home() {
   )
 }
 
-export {Home}
+export  {Home}
