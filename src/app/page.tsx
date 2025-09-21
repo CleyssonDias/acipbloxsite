@@ -1,7 +1,9 @@
+import Hero from "./_components/_home/Hero";
+
 export default function Home() {
   return (
     <>
-      <h1>ola</h1>
+      <Hero />
     </>
   );
 }
