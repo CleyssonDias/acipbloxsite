@@ -1,15 +1,14 @@
-import logo from '../assets/logo.png'
 import { FaDiscord, FaRegUserCircle } from "react-icons/fa";
+import logo from '../../../public/logo.png'
+import Image from 'next/image';
 
-function Header() {
-  return (
-    <>
-
+export default async function Header() {
+    return (
       <header className="fixed w-full flex justify-center py-8 ">
         <div className="flex items-center justify-between w-[90%] max-w-6xl border border-neutral-900 rounded-xl px-6 py-3 bg-transparent backdrop-blur-[3px]">
 
           <div className="flex items-center space-x-2 m-2">
-            <img
+            <Image
               src={logo}
               alt="logo"
               className="w-30"
@@ -52,9 +51,5 @@ function Header() {
 
         </div>
       </header>
-
-    </>
-  )
+    )
 }
-
-export { Header }
