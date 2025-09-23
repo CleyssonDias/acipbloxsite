@@ -5,7 +5,7 @@ import { RiDiscountPercentFill } from "react-icons/ri"
 
 const data = {
   lojas: [
-    {
+    {                                                                                                                                                                                                                         
       title: "ROBUX",
       itens: Array(20).fill({
         title: "1000 ROBUX",
