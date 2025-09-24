@@ -1,13 +1,14 @@
 // src/app/api/items/route.ts
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { connectDB } from "@/lib/mongoose";
+import Item from "@/models/Item";
+import Category from "@/models/Category";
 import { requireInternalAuth } from "@/lib/internalAuth";
 
 export async function GET() {
   try {
-    const items = await prisma.items.findMany({
-      include: { category: true },
-    });
+    await connectDB();
+    const items = await Item.find().populate("categoryId");
     return NextResponse.json(items);
   } catch (error) {
     return NextResponse.json({ error: "Erro ao buscar itens" }, { status: 500 });
@@ -24,17 +25,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Json inválido" }, { status: 400 });
     }
 
-    const newItem = await prisma.items.create({
-      data: {
-        name: body.name,
-        value: body.value,
-        stock: body.stock,
-        img: body.img,
-        des: body.des,
-        categoryId: body.categoryId,
-      },
+    await connectDB();
+    const newItem = await Item.create({
+      name: body.name,
+      value: body.value,
+      stock: body.stock,
+      img: body.img,
+      des: body.des,
+      categoryId: body.categoryId,
     });
-
     return NextResponse.json(newItem, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: "Erro ao criar item" }, { status: 500 });
@@ -53,11 +52,8 @@ export async function PUT(req: Request) {
 
     const { id, ...data } = body;
 
-    const updatedItem = await prisma.items.update({
-      where: { id },
-      data, 
-    });
-
+    await connectDB();
+    const updatedItem = await Item.findByIdAndUpdate(id, data, { new: true });
     return NextResponse.json(updatedItem, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: "Erro ao atualizar item" }, { status: 500 });
@@ -75,9 +71,8 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Id é obrigatório" }, { status: 400 });
     }
 
-    await prisma.items.delete({
-      where: { id },
-    });
+    await connectDB();
+    await Item.findByIdAndDelete(id);
 
     return NextResponse.json({ message: "Item deletado com sucesso" }, { status: 200 });
   } catch (error) {

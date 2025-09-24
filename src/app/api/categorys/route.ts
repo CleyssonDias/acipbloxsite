@@ -1,13 +1,21 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { connectDB } from "@/lib/mongoose";
+import Category from "@/models/Category";
+import Item from "@/models/Item";
 import { requireInternalAuth } from "@/lib/internalAuth";
 
 export async function GET() {
   try {
-    const categories = await prisma.category.findMany({
-      include: { items: true },
-    });
-    return NextResponse.json(categories);
+    await connectDB();
+    const categories = await Category.find();
+    // Buscar itens relacionados para cada categoria
+    const categoriesWithItems = await Promise.all(
+      categories.map(async (cat) => {
+        const items = await Item.find({ categoryId: cat._id });
+        return { ...cat.toObject(), items };
+      })
+    );
+    return NextResponse.json(categoriesWithItems);
   } catch {
     return NextResponse.json({ error: "Erro ao buscar categorias" }, { status: 500 });
   }
@@ -24,14 +32,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Json inválido" }, { status: 400 });
     }
 
-    const newCategory = await prisma.category.create({
-      data: {
-        name: body.name,
-        img: body.img,
-        des: body.des,
-      },
+    await connectDB();
+    const newCategory = await Category.create({
+      name: body.name,
+      img: body.img,
+      des: body.des,
     });
-
     return NextResponse.json(newCategory, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Erro ao criar categoria" }, { status: 500 });
@@ -50,11 +56,8 @@ export async function PUT(req: Request) {
 
     const { id, ...data } = body;
 
-    const updatedCategory = await prisma.category.update({
-      where: { id },
-      data,
-    });
-
+    await connectDB();
+    const updatedCategory = await Category.findByIdAndUpdate(id, data, { new: true });
     return NextResponse.json(updatedCategory);
   } catch {
     return NextResponse.json({ error: "Erro ao atualizar categoria" }, { status: 500 });
@@ -72,9 +75,9 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Id é obrigatório" }, { status: 400 });
     }
 
-    await prisma.category.delete({ where: { id } });
-
-    return NextResponse.json({ message: "Categoria deletada" });
+  await connectDB();
+  await Category.findByIdAndDelete(id);
+  return NextResponse.json({ message: "Categoria deletada" });
   } catch {
     return NextResponse.json({ error: "Erro ao deletar categoria" }, { status: 500 });
   }

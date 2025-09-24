@@ -1,14 +1,22 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { connectDB } from "@/lib/mongoose";
+import User from "@/models/User";
+import Buy from "@/models/Buy";
 import { requireInternalAuth } from "@/lib/internalAuth";
 
 // GET - lista usuários
 export async function GET() {
   try {
-    const users = await prisma.user.findMany({
-      include: { buys: true },
-    });
-    return NextResponse.json(users);
+    await connectDB();
+    const users = await User.find();
+    // Buscar compras relacionadas para cada usuário
+    const usersWithBuys = await Promise.all(
+      users.map(async (user) => {
+        const buys = await Buy.find({ userid: user._id }).populate("itemid");
+        return { ...user.toObject(), buys };
+      })
+    );
+    return NextResponse.json(usersWithBuys);
   } catch {
     return NextResponse.json({ error: "Erro ao buscar usuários" }, { status: 500 });
   }
@@ -25,13 +33,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Json inválido" }, { status: 400 });
     }
 
-    const newUser = await prisma.user.create({
-      data: {
-        name: body.name,
-        email: body.email,
-      },
+    await connectDB();
+    const newUser = await User.create({
+      name: body.name,
+      email: body.email,
     });
-
     return NextResponse.json(newUser, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Erro ao criar usuário" }, { status: 500 });
@@ -50,11 +56,8 @@ export async function PUT(req: Request) {
 
     const { id, ...data } = body;
 
-    const updatedUser = await prisma.user.update({
-      where: { id },
-      data,
-    });
-
+    await connectDB();
+    const updatedUser = await User.findByIdAndUpdate(id, data, { new: true });
     return NextResponse.json(updatedUser);
   } catch {
     return NextResponse.json({ error: "Erro ao atualizar usuário" }, { status: 500 });
@@ -73,9 +76,9 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Id é obrigatório" }, { status: 400 });
     }
 
-    await prisma.user.delete({ where: { id } });
-
-    return NextResponse.json({ message: "Usuário deletado" });
+  await connectDB();
+  await User.findByIdAndDelete(id);
+  return NextResponse.json({ message: "Usuário deletado" });
   } catch {
     return NextResponse.json({ error: "Erro ao deletar usuário" }, { status: 500 });
   }
